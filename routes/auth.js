@@ -32,7 +32,7 @@ router.post("/login", async (req, res) => {
           user_status: user.user_status,
           DepartmentID: user.DepartmentID,
           SubDepartmentID: user.SubDepartmentID,
-          // Include other necessary user details
+          location: user.location
         },
         process.env.JWT_SECRET || "maheshgitte88",
         { expiresIn: "8h" }

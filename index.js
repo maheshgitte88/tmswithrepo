@@ -13,7 +13,7 @@ const Auth = require('./routes/auth');
 const Ticket = require('./routes/ticket');
 const Hierarchy = require('./routes/hierarchy');
 const Training = require('./routes/training');
-const ProActive= require('./routes/proActive')
+const ProActive = require('./routes/proActive')
 
 const upload = multer({ dest: "uploads/" });
 
@@ -120,8 +120,8 @@ io.on('connection', (socket) => {
 app.use('/api', Auth);
 app.use('/api', Ticket.router);
 app.use('/api', Hierarchy);
-app.use('/api', Training );
-app.use('/api', ProActive );
+app.use('/api', Training);
+app.use('/api', ProActive);
 
 
 app.post("/api/img-save", async (req, res) => {

@@ -171,7 +171,7 @@ const sendEmailToAll = async (data) => {
         user_id: user_id,
         user_status: "Active",
       },
-      attributes: ["user_Email", "user_Name"],
+      attributes: ["user_Email", "user_Name", "user_Roal"],
     });
 
     if (!createdUser) {
@@ -219,6 +219,38 @@ const sendEmailToAll = async (data) => {
   </div>
     `;
 
+    const emailForStudent = `
+    <div style="font-family: Arial, sans-serif; color: #333;">
+    <p>Dear ${createdUser.user_Name},</p>
+    <p>Greetings for the day...!</p>
+    <p>This email is to inform you that your ticket has been generated successfully.</p>
+    <h3 style="color: #004080;">Ticket Details:</h3>
+    <table style="border-collapse: collapse; width: 100%; margin-bottom: 20px;">
+      <tr>
+        <th style="border: 1px solid #dddddd; text-align: left; padding: 8px; background-color: #f2f2f2;">Field</th>
+        <th style="border: 1px solid #dddddd; text-align: left; padding: 8px; background-color: #f2f2f2;">Details</th>
+      </tr>
+
+      <tr>
+        <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Ticket ID</td>
+        <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">${TicketID}</td>
+      </tr>
+      <tr>
+      <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Student Name</td>
+      <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">${createdUser.user_Name}</td>
+    </tr>
+      <tr>
+        <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Description</td>
+        <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">${Description}</td>
+      </tr>
+    </table>
+    <p>We sincerely thank you for your patience!</p>
+    <p>Please do not reply to this email, as this is a system-generated email.</p>
+    <p>Regards,</p>
+    <p>Team MIT-School of Distance Education</p>
+    <img src="https://res.cloudinary.com/dtgpxvmpl/image/upload/v1702100329/mitsde_logo_vmzo63.png" alt="MIT-School of Distance Education Logo" style="width: 150px; height: auto; margin-top: 20px;">
+  </div>
+    `
 
     const emailBody = `
     <div style="font-family: Arial, sans-serif; color: #333;">
@@ -307,6 +339,16 @@ const sendEmailToAll = async (data) => {
       emailBodyUser
     );
 
+    if (createdUser.user_Roal === "Student") {
+      sendEmail(
+        createdUser.user_Email,
+        `Ticket ID: ${TicketID} - Ticket Generated Successfully`,
+        CreatedCCMark,
+        emailForStudent
+      );
+
+    }
+
 
 
     if (LeadId) {
@@ -314,7 +356,7 @@ const sendEmailToAll = async (data) => {
         sendEmail(
           user.user_Email,
           `Ticket ID: ${LeadId} Received From ${createdUser.user_Name}`,
-          CreatedCCMark, 
+          CreatedCCMark,
           `
           <div style="font-family: Arial, sans-serif; color: #333;">
     <p>Dear ${user.user_Name},</p>
@@ -607,6 +649,7 @@ async function updateTicket(data) {
 
       // Emit a 'updatedDeptTicketChat' event to notify clients about the updated ticket
       // req.io.emit("updatedDeptTicketChat", updatedTicket);
+      sendUpdatedEmailToAll(updatedTicket)
       return updatedTicket;
       // Send success response with the updated ticket
       // res.status(200).json({ success: true, ticket: updatedTicket });
@@ -620,7 +663,154 @@ async function updateTicket(data) {
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 }
+const sendUpdatedEmailToAll = async (data) => {
+  try {
+    const {
+      AssignedToDepartmentID,
+      AssignedToSubDepartmentID,
+      TicketID,
+      Description,
+      TicketResTimeInMinutes,
+      user_id,
+      LeadId,
+      Status,
+      Querycategory,
+      QuerySubcategory,
+      ResolutionDescription,
+      TransferDescription,
+      CreatedCCMark,
+      ResolvedCCMark,
+      TransferCCMark
+    } = data.dataValues;
 
+    const users = await User.findAll({
+      where: {
+        SubDepartmentID: AssignedToSubDepartmentID,
+        user_status: "Active",
+      },
+      attributes: ["user_Email", "user_Name"],
+    });
+
+    if (users.length === 0) {
+      console.log("No users found in the specified department.");
+      return;
+    }
+
+    const emailBodyUser = `
+    <div style="font-family: Arial, sans-serif; color: #333;">
+    <p>Dear ${createdUser.user_Name},</p>
+    <p>Greetings for the day...!</p>
+    <p>This email is to inform you that your ticket has been generated successfully.</p>
+    <h3 style="color: #004080;">Ticket Details:</h3>
+    <table style="border-collapse: collapse; width: 100%; margin-bottom: 20px;">
+      <tr>
+        <th style="border: 1px solid #dddddd; text-align: left; padding: 8px; background-color: #f2f2f2;">Field</th>
+        <th style="border: 1px solid #dddddd; text-align: left; padding: 8px; background-color: #f2f2f2;">Details</th>
+      </tr>
+      <tr>
+        <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Ticket ID</td>
+        <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">${TicketID}</td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Query Category</td>
+        <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">${Querycategory}</td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Query Subcategory</td>
+        <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">${QuerySubcategory}</td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Description</td>
+        <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">${Description}</td>
+      </tr>
+      <tr>
+      <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Resolved Description </td>
+      <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">${ResolutionDescription}</td>
+    </tr>
+      <tr>
+        <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">CC Mark</td>
+        <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">${CreatedCCMark}</td>
+      </tr>
+    </table>
+    <p>We sincerely thank you for your patience!</p>
+    <p>Please do not reply to this email, as this is a system-generated email.</p>
+    <p>Regards,</p>
+    <p>Team MIT-School of Distance Education</p>
+    <img src="https://res.cloudinary.com/dtgpxvmpl/image/upload/v1702100329/mitsde_logo_vmzo63.png" alt="MIT-School of Distance Education Logo" style="width: 150px; height: auto; margin-top: 20px;">
+  </div>
+    `;
+
+    const emailBodyUserTranf = `
+    <div style="font-family: Arial, sans-serif; color: #333;">
+    <p>Dear ${createdUser.user_Name},</p>
+    <p>Greetings for the day...!</p>
+    <p>This email is to inform you that your ticket has been generated successfully.</p>
+    <h3 style="color: #004080;">Ticket Details:</h3>
+    <table style="border-collapse: collapse; width: 100%; margin-bottom: 20px;">
+      <tr>
+        <th style="border: 1px solid #dddddd; text-align: left; padding: 8px; background-color: #f2f2f2;">Field</th>
+        <th style="border: 1px solid #dddddd; text-align: left; padding: 8px; background-color: #f2f2f2;">Details</th>
+      </tr>
+      <tr>
+        <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Ticket ID</td>
+        <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">${TicketID}</td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Query Category</td>
+        <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">${Querycategory}</td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Query Subcategory</td>
+        <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">${QuerySubcategory}</td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Description</td>
+        <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">${Description}</td>
+      </tr>
+      <tr>
+      <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Resolved Description </td>
+      <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">${TransferDescription}</td>
+    </tr>
+      <tr>
+        <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">CC Mark</td>
+        <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">${CreatedCCMark}</td>
+      </tr>
+    </table>
+    <p>We sincerely thank you for your patience!</p>
+    <p>Please do not reply to this email, as this is a system-generated email.</p>
+    <p>Regards,</p>
+    <p>Team MIT-School of Distance Education</p>
+    <img src="https://res.cloudinary.com/dtgpxvmpl/image/upload/v1702100329/mitsde_logo_vmzo63.png" alt="MIT-School of Distance Education Logo" style="width: 150px; height: auto; margin-top: 20px;">
+  </div>
+    `;
+
+    const createdUser = await User.findOne({
+      where: {
+        user_id: user_id,
+        user_status: "Active",
+      },
+      attributes: ["user_Email", "user_Name", "user_Roal"],
+    });
+
+    if (TransferDescription && Status === "Resolved") {
+      sendEmail(
+        createdUser.user_Email,
+        `Ticket ID: ${TicketID} - Ticket Resolved`,
+        CreatedCCMark,
+        emailBodyUserTranf
+      );
+    } else if (Status === "Resolved") {
+      sendEmail(
+        createdUser.user_Email,
+        `Ticket ID: ${TicketID} - Ticket Resolved`,
+        CreatedCCMark,
+        emailBodyUser
+      );
+    }
+  } catch (error) {
+    console.log(error)
+  }
+}
 
 async function claimTicket(data) {
   try {
@@ -878,7 +1068,7 @@ router.get("/trs-tickets/:departmentId/:SubDepartmentId", async (req, res) => {
       where: {
         TransferredToDepartmentID: departmentId,
         TransferredToSubDepartmentID: subDepartmentId,
-        transferred_Claim_User_id:null
+        transferred_Claim_User_id: null
 
       },
       // where: { user_id: 2, Status: "Pending" },
@@ -1309,7 +1499,7 @@ router.get("/emp-ticket/claimed-trf/:user_id", async (req, res) => {
     const tickets = await Ticket.findAll({
       where: {
         Status: "Pending",
-        transferred_Claim_User_id:user_id,
+        transferred_Claim_User_id: user_id,
       },
       include: [
         {
