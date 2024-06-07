@@ -2,8 +2,8 @@ const express = require("express");
 const { Server } = require("socket.io");
 const cors = require("cors");
 const fs = require('fs');
-// const https = require('https');
-const http = require('http');
+const https = require('https');
+// const http = require('http');
 
 const cloudinary = require("./cloudinaryConfig");
 require('dotenv').config();
@@ -27,14 +27,14 @@ const options = {
 };
 
 // Create the HTTPS server
-// const server = https.createServer(options, app);
-const server = http.createServer(app);
+const server = https.createServer(options, app);
+// const server = http.createServer(app);
 
 
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
-    // origin: "https://master.dm6qtc6p6ktjh.amplifyapp.com",
+    // origin: "http://localhost:5173",
+    origin: "https://master.dm6qtc6p6ktjh.amplifyapp.com",
     methods: ["GET", "POST", "PUT", "DELETE"],
   },
 });
