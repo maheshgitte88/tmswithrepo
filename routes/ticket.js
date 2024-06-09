@@ -2,7 +2,7 @@ const express = require("express");
 const User = require("../models/User");
 const Ticket = require("../models/Ticket");
 const router = express.Router();
-
+const moment = require("moment");
 const jwt = require("jsonwebtoken");
 const Department = require("../models/Department");
 const SubDepartment = require("../models/SubDepartment");
@@ -107,14 +107,26 @@ async function createTicket(data) {
   const createdTicket = await Ticket.findOne({
     where: { TicketID: ticket.TicketID },
     include: [
-      { model: User, as: "claim_User", include: [{ model: Department, include: [SubDepartment] }] },
-      { model: User, as: "transferredClaimUser", include: [{ model: Department, include: [SubDepartment] }] },
+      {
+        model: User,
+        as: "claim_User",
+        include: [{ model: Department, include: [SubDepartment] }],
+      },
+      {
+        model: User,
+        as: "transferredClaimUser",
+        include: [{ model: Department, include: [SubDepartment] }],
+      },
       { model: Department, as: "AssignedToDepartment" },
       { model: SubDepartment, as: "AssignedToSubDepartment" },
       { model: Department, as: "TransferredToDepartment" },
       { model: SubDepartment, as: "TransferredToSubDepartment" },
       { model: TicketUpdate },
-      { model: User, as: "from_User", include: [{ model: Department, include: [SubDepartment] }] },
+      {
+        model: User,
+        as: "from_User",
+        include: [{ model: Department, include: [SubDepartment] }],
+      },
     ],
   });
   sendEmailToAll(createdTicket);
@@ -133,7 +145,6 @@ async function createTicket(data) {
 //   );
 // }
 
-
 const sendEmailToAll = async (data) => {
   try {
     const {
@@ -150,7 +161,7 @@ const sendEmailToAll = async (data) => {
       TransferDescription,
       CreatedCCMark,
       ResolvedCCMark,
-      TransferCCMark
+      TransferCCMark,
     } = data.dataValues;
 
     const users = await User.findAll({
@@ -250,7 +261,7 @@ const sendEmailToAll = async (data) => {
     <p>Team MIT-School of Distance Education</p>
     <img src="https://res.cloudinary.com/dtgpxvmpl/image/upload/v1702100329/mitsde_logo_vmzo63.png" alt="MIT-School of Distance Education Logo" style="width: 150px; height: auto; margin-top: 20px;">
   </div>
-    `
+    `;
 
     const emailBody = `
     <div style="font-family: Arial, sans-serif; color: #333;">
@@ -330,14 +341,7 @@ const sendEmailToAll = async (data) => {
     <p>Team MIT-School of Distance Education</p>
     <img src="https://res.cloudinary.com/dtgpxvmpl/image/upload/v1702100329/mitsde_logo_vmzo63.png" alt="MIT-School of Distance Education Logo" style="width: 150px; height: auto; margin-top: 20px;">
   </div>
-    `
-
-    sendEmail(
-      createdUser.user_Email,
-      `Ticket ID: ${TicketID} - Ticket Generated Successfully`,
-      CreatedCCMark,
-      emailBodyUser
-    );
+    `;
 
     if (createdUser.user_Roal === "Student") {
       sendEmail(
@@ -346,58 +350,111 @@ const sendEmailToAll = async (data) => {
         CreatedCCMark,
         emailForStudent
       );
-
+    } else {
+      sendEmail(
+        createdUser.user_Email,
+        `Ticket ID: ${TicketID} - Ticket Generated Successfully`,
+        CreatedCCMark,
+        emailBodyUser
+      );
     }
 
-
-
     if (LeadId) {
-      users.forEach((user) => {
-        sendEmail(
-          user.user_Email,
-          `Ticket ID: ${LeadId} Received From ${createdUser.user_Name}`,
-          CreatedCCMark,
-          `
-          <div style="font-family: Arial, sans-serif; color: #333;">
-    <p>Dear ${user.user_Name},</p>
-    <p>Greetings for the day...!</p>
-    <p>This email is to inform you that your ticket has been generated successfully.</p>
-    <h3 style="color: #004080;">Ticket Details:</h3>
-    <table style="border-collapse: collapse; width: 100%; margin-bottom: 20px;">
-      <tr>
-        <th style="border: 1px solid #dddddd; text-align: left; padding: 8px; background-color: #f2f2f2;">Field</th>
-        <th style="border: 1px solid #dddddd; text-align: left; padding: 8px; background-color: #f2f2f2;">Details</th>
-      </tr>
-      <tr>
-        <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Ticket ID</td>
-        <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">${TicketID}</td>
-      </tr>
-      <tr>
-        <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Query Category</td>
-        <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">${Querycategory}</td>
-      </tr>
-      <tr>
-        <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Query Subcategory</td>
-        <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">${QuerySubcategory}</td>
-      </tr>
-      <tr>
-        <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Description</td>
-        <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">${Description}</td>
-      </tr>
-      <tr>
-        <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">CC Mark</td>
-        <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">${CreatedCCMark}</td>
-      </tr>
-    </table>
-    <p>We sincerely thank you for your patience!</p>
-    <p>Please do not reply to this email, as this is a system-generated email.</p>
-    <p>Regards,</p>
-    <p>Team MIT-School of Distance Education</p>
-    <img src="https://res.cloudinary.com/dtgpxvmpl/image/upload/v1702100329/mitsde_logo_vmzo63.png" alt="MIT-School of Distance Education Logo" style="width: 150px; height: auto; margin-top: 20px;">
-  </div>
-          `
-        );
-      });
+      if (LeadId && Querycategory && QuerySubcategory) {
+        users.forEach((user) => {
+          sendEmail(
+            user.user_Email,
+            `Ticket ID: ${LeadId} Received From ${createdUser.user_Name}`,
+            CreatedCCMark,
+            `
+            <div style="font-family: Arial, sans-serif; color: #333;">
+      <p>Dear ${user.user_Name},</p>
+      <p>Greetings for the day...!</p>
+      <p>This email is to inform you that your ticket has been generated successfully.</p>
+      <h3 style="color: #004080;">Ticket Details:</h3>
+      <table style="border-collapse: collapse; width: 100%; margin-bottom: 20px;">
+        <tr>
+          <th style="border: 1px solid #dddddd; text-align: left; padding: 8px; background-color: #f2f2f2;">Field</th>
+          <th style="border: 1px solid #dddddd; text-align: left; padding: 8px; background-color: #f2f2f2;">Details</th>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Ticket ID</td>
+          <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">${TicketID}</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Query Category</td>
+          <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">${Querycategory}</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Query Subcategory</td>
+          <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">${QuerySubcategory}</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Description</td>
+          <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">${Description}</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">CC Mark</td>
+          <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">${CreatedCCMark}</td>
+        </tr>
+      </table>
+      <p>We sincerely thank you for your patience!</p>
+      <p>Please do not reply to this email, as this is a system-generated email.</p>
+      <p>Regards,</p>
+      <p>Team MIT-School of Distance Education</p>
+      <img src="https://res.cloudinary.com/dtgpxvmpl/image/upload/v1702100329/mitsde_logo_vmzo63.png" alt="MIT-School of Distance Education Logo" style="width: 150px; height: auto; margin-top: 20px;">
+    </div>
+            `
+          );
+        });
+      } else {
+        users.forEach((user) => {
+          sendEmail(
+            user.user_Email,
+            `Ticket ID: ${LeadId} Received From ${createdUser.user_Name}`,
+            CreatedCCMark,
+            `
+            <div style="font-family: Arial, sans-serif; color: #333;">
+      <p>Dear ${user.user_Name},</p>
+      <p>Greetings for the day...!</p>
+      <p>This email is to inform you that your ticket has been generated successfully.</p>
+      <h3 style="color: #004080;">Ticket Details:</h3>
+      <table style="border-collapse: collapse; width: 100%; margin-bottom: 20px;">
+        <tr>
+          <th style="border: 1px solid #dddddd; text-align: left; padding: 8px; background-color: #f2f2f2;">Field</th>
+          <th style="border: 1px solid #dddddd; text-align: left; padding: 8px; background-color: #f2f2f2;">Details</th>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Ticket ID</td>
+          <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">${TicketID}</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Query Category</td>
+          <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Extraaedge</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Query Subcategory</td>
+          <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Lead Transfer</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Description</td>
+          <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">${Description}</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">CC Mark</td>
+          <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">${CreatedCCMark}</td>
+        </tr>
+      </table>
+      <p>We sincerely thank you for your patience!</p>
+      <p>Please do not reply to this email, as this is a system-generated email.</p>
+      <p>Regards,</p>
+      <p>Team MIT-School of Distance Education</p>
+      <img src="https://res.cloudinary.com/dtgpxvmpl/image/upload/v1702100329/mitsde_logo_vmzo63.png" alt="MIT-School of Distance Education Logo" style="width: 150px; height: auto; margin-top: 20px;">
+    </div>
+            `
+          );
+        });
+      }
     } else {
       users.forEach((user) => {
         sendEmail(
@@ -419,14 +476,14 @@ const sendEmailToAll = async (data) => {
               <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Ticket ID</td>
               <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">${TicketID}</td>
             </tr>
-            <tr>
-              <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Query Category</td>
-              <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">${Querycategory}</td>
-            </tr>
-            <tr>
-              <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Query Subcategory</td>
-              <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">${QuerySubcategory}</td>
-            </tr>
+                    <tr>
+          <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Query Category</td>
+          <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">${Querycategory}</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Query Subcategory</td>
+          <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">${QuerySubcategory}</td>
+        </tr>
             <tr>
               <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Description</td>
               <td style="border: 1px solid #dddddd; text-align: left; padding: 8px;">${Description}</td>
@@ -530,7 +587,6 @@ const sendEmailToAll = async (data) => {
 //       });
 //     }
 
-
 //     console.log("Emails have been sent to all users in the department.");
 //   } catch (error) {
 //     console.error("Error fetching users or sending emails: %s", error);
@@ -599,10 +655,9 @@ router.post("/update-ticket", async (req, res) => {
   }
 });
 
-
 async function updateTicket(data) {
   try {
-    console.log(data, 262)
+    console.log(data, 262);
     const { TicketID, ...ticketData } = data.formData;
 
     // Find the ticket by TicketID
@@ -649,7 +704,7 @@ async function updateTicket(data) {
 
       // Emit a 'updatedDeptTicketChat' event to notify clients about the updated ticket
       // req.io.emit("updatedDeptTicketChat", updatedTicket);
-      sendUpdatedEmailToAll(updatedTicket)
+      sendUpdatedEmailToAll(updatedTicket);
       return updatedTicket;
       // Send success response with the updated ticket
       // res.status(200).json({ success: true, ticket: updatedTicket });
@@ -680,7 +735,7 @@ const sendUpdatedEmailToAll = async (data) => {
       TransferDescription,
       CreatedCCMark,
       ResolvedCCMark,
-      TransferCCMark
+      TransferCCMark,
     } = data.dataValues;
 
     const users = await User.findAll({
@@ -808,18 +863,17 @@ const sendUpdatedEmailToAll = async (data) => {
       );
     }
   } catch (error) {
-    console.log(error)
+    console.log(error);
   }
-}
+};
 
 async function claimTicket(data) {
   try {
     const { TicketID, user_id } = data.formData;
 
-
     // const ticketId = req.params.id;
     // const { claim_User_Id } = req.body; // Assume the ID of the claiming user is sent in the request body
-    console.log(TicketID, user_id)
+    console.log(TicketID, user_id);
     // Update the ticket to be claimed by the user
     const ticket = await Ticket.update(
       { claim_User_Id: user_id },
@@ -827,7 +881,9 @@ async function claimTicket(data) {
     );
 
     if (ticket[0] === 0) {
-      return res.status(404).json({ success: false, message: 'Ticket not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Ticket not found" });
     }
 
     // Find the updated ticket with all necessary associations
@@ -836,30 +892,30 @@ async function claimTicket(data) {
       include: [
         {
           model: User,
-          as: 'claim_User',
+          as: "claim_User",
           include: [{ model: Department, include: [{ model: SubDepartment }] }],
         },
         {
           model: User,
-          as: 'transferredClaimUser',
+          as: "transferredClaimUser",
           include: [{ model: Department, include: [{ model: SubDepartment }] }],
         },
-        { model: Department, as: 'AssignedToDepartment' },
-        { model: SubDepartment, as: 'AssignedToSubDepartment' },
-        { model: Department, as: 'TransferredToDepartment' },
-        { model: SubDepartment, as: 'TransferredToSubDepartment' },
+        { model: Department, as: "AssignedToDepartment" },
+        { model: SubDepartment, as: "AssignedToSubDepartment" },
+        { model: Department, as: "TransferredToDepartment" },
+        { model: SubDepartment, as: "TransferredToSubDepartment" },
         { model: TicketUpdate },
         {
           model: User,
-          as: 'from_User',
+          as: "from_User",
           include: [{ model: Department, include: [{ model: SubDepartment }] }],
         },
       ],
     });
     return updatedTicket;
   } catch (error) {
-    console.error('Error claiming ticket:', error);
-    res.status(500).json({ success: false, message: 'Internal server error' });
+    console.error("Error claiming ticket:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
   }
 }
 
@@ -867,10 +923,9 @@ async function transfclaimTicket(data) {
   try {
     const { TicketID, user_id } = data.formData;
 
-
     // const ticketId = req.params.id;
     // const { claim_User_Id } = req.body; // Assume the ID of the claiming user is sent in the request body
-    console.log(TicketID, user_id)
+    console.log(TicketID, user_id);
     // Update the ticket to be claimed by the user
     const ticket = await Ticket.update(
       { transferred_Claim_User_id: user_id },
@@ -878,7 +933,9 @@ async function transfclaimTicket(data) {
     );
 
     if (ticket[0] === 0) {
-      return res.status(404).json({ success: false, message: 'Ticket not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Ticket not found" });
     }
 
     // Find the updated ticket with all necessary associations
@@ -887,34 +944,32 @@ async function transfclaimTicket(data) {
       include: [
         {
           model: User,
-          as: 'claim_User',
+          as: "claim_User",
           include: [{ model: Department, include: [{ model: SubDepartment }] }],
         },
         {
           model: User,
-          as: 'transferredClaimUser',
+          as: "transferredClaimUser",
           include: [{ model: Department, include: [{ model: SubDepartment }] }],
         },
-        { model: Department, as: 'AssignedToDepartment' },
-        { model: SubDepartment, as: 'AssignedToSubDepartment' },
-        { model: Department, as: 'TransferredToDepartment' },
-        { model: SubDepartment, as: 'TransferredToSubDepartment' },
+        { model: Department, as: "AssignedToDepartment" },
+        { model: SubDepartment, as: "AssignedToSubDepartment" },
+        { model: Department, as: "TransferredToDepartment" },
+        { model: SubDepartment, as: "TransferredToSubDepartment" },
         { model: TicketUpdate },
         {
           model: User,
-          as: 'from_User',
+          as: "from_User",
           include: [{ model: Department, include: [{ model: SubDepartment }] }],
         },
       ],
     });
     return updatedTicket;
   } catch (error) {
-    console.error('Error claiming ticket:', error);
-    res.status(500).json({ success: false, message: 'Internal server error' });
+    console.error("Error claiming ticket:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
   }
 }
-
-
 
 // router.post("/create-ticket", async (req, res) => {
 //     try {
@@ -931,6 +986,7 @@ async function transfclaimTicket(data) {
 //     }
 //   });
 
+//Tickets less than 24h
 
 router.get("/tickets/:departmentId/:SubDepartmentId", async (req, res) => {
   try {
@@ -944,8 +1000,8 @@ router.get("/tickets/:departmentId/:SubDepartmentId", async (req, res) => {
         AssignedToDepartmentID: departmentId,
         AssignedToSubDepartmentID: subDepartmentId,
         claim_User_Id: {
-          [Op.is]: null
-        }
+          [Op.is]: null,
+        },
       },
       include: [
         {
@@ -954,7 +1010,11 @@ router.get("/tickets/:departmentId/:SubDepartmentId", async (req, res) => {
           include: [
             {
               model: Department,
-              include: [{ model: SubDepartment }],
+              include: [
+                {
+                  model: SubDepartment,
+                },
+              ],
             },
           ],
         },
@@ -964,7 +1024,11 @@ router.get("/tickets/:departmentId/:SubDepartmentId", async (req, res) => {
           include: [
             {
               model: Department,
-              include: [{ model: SubDepartment }],
+              include: [
+                {
+                  model: SubDepartment,
+                },
+              ],
             },
           ],
         },
@@ -979,7 +1043,11 @@ router.get("/tickets/:departmentId/:SubDepartmentId", async (req, res) => {
           include: [
             {
               model: Department,
-              include: [{ model: SubDepartment }],
+              include: [
+                {
+                  model: SubDepartment,
+                },
+              ],
             },
           ],
         },
@@ -995,6 +1063,72 @@ router.get("/tickets/:departmentId/:SubDepartmentId", async (req, res) => {
   }
 });
 
+// Tickets in between 24h to 48 h
+
+// Tickets above 48h
+
+// router.get("/tickets/:departmentId/:SubDepartmentId", async (req, res) => {
+//   try {
+//     // Extract departmentId and subDepartmentId from request parameters
+//     const departmentId = req.params.departmentId;
+//     const subDepartmentId = req.params.SubDepartmentId;
+
+//     // Fetch tickets from the database where claim_User_Id is null and filter by department and sub-department IDs
+//     const tickets = await Ticket.findAll({
+//       where: {
+//         AssignedToDepartmentID: departmentId,
+//         AssignedToSubDepartmentID: subDepartmentId,
+//         claim_User_Id: {
+//           [Op.is]: null,
+//         },
+//       },
+//       include: [
+//         {
+//           model: User,
+//           as: "claim_User",
+//           include: [
+//             {
+//               model: Department,
+//               include: [{ model: SubDepartment }],
+//             },
+//           ],
+//         },
+//         {
+//           model: User,
+//           as: "transferredClaimUser",
+//           include: [
+//             {
+//               model: Department,
+//               include: [{ model: SubDepartment }],
+//             },
+//           ],
+//         },
+//         { model: Department, as: "AssignedToDepartment" },
+//         { model: SubDepartment, as: "AssignedToSubDepartment" },
+//         { model: Department, as: "TransferredToDepartment" },
+//         { model: SubDepartment, as: "TransferredToSubDepartment" },
+//         { model: TicketUpdate },
+//         {
+//           model: User,
+//           as: "from_User",
+//           include: [
+//             {
+//               model: Department,
+//               include: [{ model: SubDepartment }],
+//             },
+//           ],
+//         },
+//       ],
+//     });
+
+//     // Send success response with the retrieved tickets
+//     res.status(200).json({ success: true, tickets });
+//   } catch (error) {
+//     console.error("Error fetching tickets:", error);
+//     // Send error response if an error occurs
+//     res.status(500).json({ success: false, message: "Internal server error" });
+//   }
+// });
 
 // router.get("/tickets/:departmentId/:SubDepartmentId", async (req, res) => {
 //   try {
@@ -1068,8 +1202,7 @@ router.get("/trs-tickets/:departmentId/:SubDepartmentId", async (req, res) => {
       where: {
         TransferredToDepartmentID: departmentId,
         TransferredToSubDepartmentID: subDepartmentId,
-        transferred_Claim_User_id: null
-
+        transferred_Claim_User_id: null,
       },
       // where: { user_id: 2, Status: "Pending" },
       include: [
@@ -1121,9 +1254,6 @@ router.get("/trs-tickets/:departmentId/:SubDepartmentId", async (req, res) => {
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
-
-
-
 
 router.get("/tickets/:user_id", async (req, res) => {
   try {
@@ -1299,7 +1429,6 @@ router.get("/Closed/tickets/:user_id", async (req, res) => {
   }
 });
 
-
 router.get("/emp-ticket/closed/:user_id", async (req, res) => {
   try {
     // Extract user_id from request parameters
@@ -1313,8 +1442,8 @@ router.get("/emp-ticket/closed/:user_id", async (req, res) => {
         [Op.or]: [
           { claim_User_Id: user_id },
           { transferred_Claim_User_id: user_id },
-          { transferred_Claim_User_id: null }
-        ]
+          // { transferred_Claim_User_id: null },
+        ],
       },
       include: [
         {
@@ -1376,8 +1505,8 @@ router.get("/emp-ticket/resolved/:user_id", async (req, res) => {
         [Op.or]: [
           { claim_User_Id: user_id },
           { transferred_Claim_User_id: user_id },
-          { transferred_Claim_User_id: null }
-        ]
+          // { transferred_Claim_User_id: null },
+        ],
       },
       include: [
         {
@@ -1427,7 +1556,9 @@ router.get("/emp-ticket/resolved/:user_id", async (req, res) => {
   }
 });
 
-router.get("/emp-ticket/claimed/:user_id", async (req, res) => {
+//Tickets less than 24h
+
+router.get("/emp-ticket/less/claimed/:user_id", async (req, res) => {
   try {
     // Extract user_id from request parameters
     const user_id = req.params.user_id;
@@ -1440,6 +1571,148 @@ router.get("/emp-ticket/claimed/:user_id", async (req, res) => {
           [Op.is]: null,
         },
         claim_User_Id: user_id,
+        createdAt: {
+          [Op.gte]: moment().subtract(24, "hours").toDate(),
+        },
+        // transferred_Claim_User_id:user_id,
+      },
+      include: [
+        {
+          model: User,
+          as: "claim_User",
+          include: [
+            {
+              model: Department,
+              include: [{ model: SubDepartment }],
+            },
+          ],
+        },
+        {
+          model: User,
+          as: "transferredClaimUser",
+          include: [
+            {
+              model: Department,
+              include: [{ model: SubDepartment }],
+            },
+          ],
+        },
+        { model: Department, as: "AssignedToDepartment" },
+        { model: SubDepartment, as: "AssignedToSubDepartment" },
+        { model: Department, as: "TransferredToDepartment" },
+        { model: SubDepartment, as: "TransferredToSubDepartment" },
+        { model: TicketUpdate },
+        {
+          model: User,
+          as: "from_User",
+          include: [
+            {
+              model: Department,
+              include: [{ model: SubDepartment }],
+            },
+          ],
+        },
+      ],
+    });
+
+    // Send success response with the retrieved tickets
+    res.status(200).json({ success: true, tickets });
+  } catch (error) {
+    console.error("Error fetching tickets:", error);
+    // Send error response if an error occurs
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+});
+
+// Tickets in between 24h to 48 h
+
+router.get("/emp-ticket/between/claimed/:user_id", async (req, res) => {
+  try {
+    // Extract user_id from request parameters
+    const user_id = req.params.user_id;
+
+    // Fetch tickets from the database
+    const tickets = await Ticket.findAll({
+      where: {
+        Status: "Pending",
+        TransferredToDepartmentID: {
+          [Op.is]: null,
+        },
+        claim_User_Id: user_id,
+        createdAt: {
+          [Op.between]: [
+            moment().subtract(48, "hours").toDate(),
+            moment().subtract(24, "hours").toDate(),
+          ],
+        },
+        // transferred_Claim_User_id:user_id,
+      },
+      include: [
+        {
+          model: User,
+          as: "claim_User",
+          include: [
+            {
+              model: Department,
+              include: [{ model: SubDepartment }],
+            },
+          ],
+        },
+        {
+          model: User,
+          as: "transferredClaimUser",
+          include: [
+            {
+              model: Department,
+              include: [{ model: SubDepartment }],
+            },
+          ],
+        },
+        { model: Department, as: "AssignedToDepartment" },
+        { model: SubDepartment, as: "AssignedToSubDepartment" },
+        { model: Department, as: "TransferredToDepartment" },
+        { model: SubDepartment, as: "TransferredToSubDepartment" },
+        { model: TicketUpdate },
+        {
+          model: User,
+          as: "from_User",
+          include: [
+            {
+              model: Department,
+              include: [{ model: SubDepartment }],
+            },
+          ],
+        },
+      ],
+    });
+
+    // Send success response with the retrieved tickets
+    res.status(200).json({ success: true, tickets });
+  } catch (error) {
+    console.error("Error fetching tickets:", error);
+    // Send error response if an error occurs
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+});
+
+// Tickets above 48h
+
+router.get("/emp-ticket/above/claimed/:user_id", async (req, res) => {
+  try {
+    // Extract user_id from request parameters
+    const user_id = req.params.user_id;
+
+    // Fetch tickets from the database
+    const tickets = await Ticket.findAll({
+      where: {
+        Status: "Pending",
+        TransferredToDepartmentID: {
+          [Op.is]: null,
+        },
+        claim_User_Id: user_id,
+        createdAt: {
+          [Op.lt]: moment().subtract(48, "hours").toDate(),
+        },
         // transferred_Claim_User_id:user_id,
       },
       include: [
@@ -1549,6 +1822,10 @@ router.get("/emp-ticket/claimed-trf/:user_id", async (req, res) => {
   }
 });
 
-
-
-module.exports = { router, createTicket, updateTicket, claimTicket, transfclaimTicket };
+module.exports = {
+  router,
+  createTicket,
+  updateTicket,
+  claimTicket,
+  transfclaimTicket,
+};
