@@ -70,4 +70,24 @@ router.post("/signup", async (req, res) => {
   }
 });
 
+
+router.put("/updateLocation/:userId", async (req, res) => {
+  const { userId } = req.params;
+  const { newLocation } = req.body;
+console.log('api hit')
+  try {
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.location = newLocation;
+    await user.save();
+
+    res.json({ message: "Location updated successfully" });
+  } catch (error) {
+    console.error("Error updating location:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
 module.exports = router;

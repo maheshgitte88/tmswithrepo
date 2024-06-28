@@ -751,6 +751,14 @@ const sendUpdatedEmailToAll = async (data) => {
       return;
     }
 
+
+    const createdUser = await User.findOne({
+      where: {
+        user_id: user_id,
+        user_status: "Active",
+      },
+      attributes: ["user_Email", "user_Name", "user_Roal"],
+    });
     const emailBodyUser = `
     <div style="font-family: Arial, sans-serif; color: #333;">
     <p>Dear ${createdUser.user_Name},</p>
@@ -839,14 +847,6 @@ const sendUpdatedEmailToAll = async (data) => {
   </div>
     `;
 
-    const createdUser = await User.findOne({
-      where: {
-        user_id: user_id,
-        user_status: "Active",
-      },
-      attributes: ["user_Email", "user_Name", "user_Roal"],
-    });
-
     if (TransferDescription && Status === "Resolved") {
       sendEmail(
         createdUser.user_Email,
@@ -867,25 +867,83 @@ const sendUpdatedEmailToAll = async (data) => {
   }
 };
 
+// async function claimTicket(data) {
+//   try {
+//     const { TicketID, user_id } = data.formData;
+
+//     // const ticketId = req.params.id;
+//     // const { claim_User_Id } = req.body; // Assume the ID of the claiming user is sent in the request body
+//     console.log(TicketID, user_id);
+//     // Update the ticket to be claimed by the user
+//     const ticket = await Ticket.update(
+//       { claim_User_Id: user_id },
+//       { where: { TicketID: TicketID } }
+//     );
+
+//     if (ticket[0] === 0) {
+//       return res
+//         .status(404)
+//         .json({ success: false, message: "Ticket not found" });
+//     }
+
+//     // Find the updated ticket with all necessary associations
+//     const updatedTicket = await Ticket.findOne({
+//       where: { TicketID: TicketID },
+//       include: [
+//         {
+//           model: User,
+//           as: "claim_User",
+//           include: [{ model: Department, include: [{ model: SubDepartment }] }],
+//         },
+//         {
+//           model: User,
+//           as: "transferredClaimUser",
+//           include: [{ model: Department, include: [{ model: SubDepartment }] }],
+//         },
+//         { model: Department, as: "AssignedToDepartment" },
+//         { model: SubDepartment, as: "AssignedToSubDepartment" },
+//         { model: Department, as: "TransferredToDepartment" },
+//         { model: SubDepartment, as: "TransferredToSubDepartment" },
+//         { model: TicketUpdate },
+//         {
+//           model: User,
+//           as: "from_User",
+//           include: [{ model: Department, include: [{ model: SubDepartment }] }],
+//         },
+//       ],
+//     });
+//     return updatedTicket;
+//   } catch (error) {
+//     console.error("Error claiming ticket:", error);
+//     res.status(500).json({ success: false, message: "Internal server error" });
+//   }
+// }
+
+
 async function claimTicket(data) {
   try {
     const { TicketID, user_id } = data.formData;
 
-    // const ticketId = req.params.id;
-    // const { claim_User_Id } = req.body; // Assume the ID of the claiming user is sent in the request body
-    console.log(TicketID, user_id);
+    // Check if the ticket is already claimed
+    const existingTicket = await Ticket.findOne({
+      where: { TicketID: TicketID },
+      attributes: ['claim_User_Id'] // Only fetch claim_User_Id to minimize data transfer
+    });
+
+    if (!existingTicket) {
+      return { success: false, message: "Ticket not found", user_id: user_id };
+    }
+
+    if (existingTicket.claim_User_Id) {
+      return { success: false, message: "Ticket already claimed" , user_id: user_id };
+    }
+
     // Update the ticket to be claimed by the user
     const ticket = await Ticket.update(
       { claim_User_Id: user_id },
       { where: { TicketID: TicketID } }
     );
 
-    if (ticket[0] === 0) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Ticket not found" });
-    }
-
     // Find the updated ticket with all necessary associations
     const updatedTicket = await Ticket.findOne({
       where: { TicketID: TicketID },
@@ -919,57 +977,58 @@ async function claimTicket(data) {
   }
 }
 
-async function transfclaimTicket(data) {
-  try {
-    const { TicketID, user_id } = data.formData;
 
-    // const ticketId = req.params.id;
-    // const { claim_User_Id } = req.body; // Assume the ID of the claiming user is sent in the request body
-    console.log(TicketID, user_id);
-    // Update the ticket to be claimed by the user
-    const ticket = await Ticket.update(
-      { transferred_Claim_User_id: user_id },
-      { where: { TicketID: TicketID } }
-    );
+// async function transfclaimTicket(data) {
+//   try {
+//     const { TicketID, user_id } = data.formData;
 
-    if (ticket[0] === 0) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Ticket not found" });
-    }
+//     // const ticketId = req.params.id;
+//     // const { claim_User_Id } = req.body; // Assume the ID of the claiming user is sent in the request body
+//     console.log(TicketID, user_id);
+//     // Update the ticket to be claimed by the user
+//     const ticket = await Ticket.update(
+//       { transferred_Claim_User_id: user_id },
+//       { where: { TicketID: TicketID } }
+//     );
 
-    // Find the updated ticket with all necessary associations
-    const updatedTicket = await Ticket.findOne({
-      where: { TicketID: TicketID },
-      include: [
-        {
-          model: User,
-          as: "claim_User",
-          include: [{ model: Department, include: [{ model: SubDepartment }] }],
-        },
-        {
-          model: User,
-          as: "transferredClaimUser",
-          include: [{ model: Department, include: [{ model: SubDepartment }] }],
-        },
-        { model: Department, as: "AssignedToDepartment" },
-        { model: SubDepartment, as: "AssignedToSubDepartment" },
-        { model: Department, as: "TransferredToDepartment" },
-        { model: SubDepartment, as: "TransferredToSubDepartment" },
-        { model: TicketUpdate },
-        {
-          model: User,
-          as: "from_User",
-          include: [{ model: Department, include: [{ model: SubDepartment }] }],
-        },
-      ],
-    });
-    return updatedTicket;
-  } catch (error) {
-    console.error("Error claiming ticket:", error);
-    res.status(500).json({ success: false, message: "Internal server error" });
-  }
-}
+//     if (ticket[0] === 0) {
+//       return res
+//         .status(404)
+//         .json({ success: false, message: "Ticket not found" });
+//     }
+
+//     // Find the updated ticket with all necessary associations
+//     const updatedTicket = await Ticket.findOne({
+//       where: { TicketID: TicketID },
+//       include: [
+//         {
+//           model: User,
+//           as: "claim_User",
+//           include: [{ model: Department, include: [{ model: SubDepartment }] }],
+//         },
+//         {
+//           model: User,
+//           as: "transferredClaimUser",
+//           include: [{ model: Department, include: [{ model: SubDepartment }] }],
+//         },
+//         { model: Department, as: "AssignedToDepartment" },
+//         { model: SubDepartment, as: "AssignedToSubDepartment" },
+//         { model: Department, as: "TransferredToDepartment" },
+//         { model: SubDepartment, as: "TransferredToSubDepartment" },
+//         { model: TicketUpdate },
+//         {
+//           model: User,
+//           as: "from_User",
+//           include: [{ model: Department, include: [{ model: SubDepartment }] }],
+//         },
+//       ],
+//     });
+//     return updatedTicket;
+//   } catch (error) {
+//     console.error("Error claiming ticket:", error);
+//     res.status(500).json({ success: false, message: "Internal server error" });
+//   }
+// }
 
 // router.post("/create-ticket", async (req, res) => {
 //     try {
@@ -987,6 +1046,70 @@ async function transfclaimTicket(data) {
 //   });
 
 //Tickets less than 24h
+
+
+async function transfclaimTicket(data) {
+  try {
+    const { TicketID, user_id } = data.formData;
+
+    // Check if the ticket is already transferred
+    const existingTicket = await Ticket.findOne({
+      where: { TicketID: TicketID },
+      attributes: ['transferred_Claim_User_id'] // Only fetch transferred_Claim_User_id to minimize data transfer
+    });
+
+    if (!existingTicket) {
+      return { success: false, message: "Ticket not found", user_id: user_id };
+    }
+
+    if (existingTicket.transferred_Claim_User_id) {
+      return { success: false, message: "Ticket already claimed" , user_id: user_id };;
+    }
+
+    // Update the ticket to be transferred to the user
+    const ticket = await Ticket.update(
+      { transferred_Claim_User_id: user_id },
+      { where: { TicketID: TicketID } }
+    );
+
+    if (ticket[0] === 0) {
+      return res.status(404).json({ success: false, message: "Ticket not found" });
+    }
+
+    // Find the updated ticket with all necessary associations
+    const updatedTicket = await Ticket.findOne({
+      where: { TicketID: TicketID },
+      include: [
+        {
+          model: User,
+          as: "claim_User",
+          include: [{ model: Department, include: [{ model: SubDepartment }] }],
+        },
+        {
+          model: User,
+          as: "transferredClaimUser",
+          include: [{ model: Department, include: [{ model: SubDepartment }] }],
+        },
+        { model: Department, as: "AssignedToDepartment" },
+        { model: SubDepartment, as: "AssignedToSubDepartment" },
+        { model: Department, as: "TransferredToDepartment" },
+        { model: SubDepartment, as: "TransferredToSubDepartment" },
+        { model: TicketUpdate },
+        {
+          model: User,
+          as: "from_User",
+          include: [{ model: Department, include: [{ model: SubDepartment }] }],
+        },
+      ],
+    });
+    return updatedTicket;
+  } catch (error) {
+    console.error("Error transferring ticket:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+}
+
+
 
 router.get("/tickets/:departmentId/:SubDepartmentId", async (req, res) => {
   try {

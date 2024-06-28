@@ -2,8 +2,8 @@ const express = require("express");
 const { Server } = require("socket.io");
 const cors = require("cors");
 const fs = require('fs');
-const https = require('https');
-// const http = require('http');
+// const https = require('https');
+const http = require('http');
 
 const cloudinary = require("./cloudinaryConfig");
 require('dotenv').config();
@@ -27,14 +27,14 @@ const options = {
 };
 
 // Create the HTTPS server
-const server = https.createServer(options, app);
-// const server = http.createServer(app);
+// const server = https.createServer(options, app);
+const server = http.createServer(app);
 
 
 const io = new Server(server, {
   cors: {
-    // origin: "http://localhost:5173",
-    origin: "https://master.d7ghmfcjtu6yi.amplifyapp.com",
+    origin: "http://localhost:5173",
+    // origin: "https://master.d7ghmfcjtu6yi.amplifyapp.com",
     methods: ["GET", "POST", "PUT", "DELETE"],
   },
 });
@@ -75,12 +75,19 @@ io.on('connection', (socket) => {
     console.log(`User ${socket.id} joined room For TicketUpdate with Id ${transferDep}`);
   });
 
+  socket.on("userUpdatedticketRoom", (TicketID) => {
+    socket.join(TicketID);
+    console.log(`User ${socket.id} joined room ${TicketID}`);
+  });
   socket.on('updateTicket', async (data) => {
     try {
       const updateTicket = await Ticket.updateTicket(data);
       const roomid = data.AssignedToSubDepartmentID;
-      console.log(roomid, 94);
+      console.log(roomid, 82);
+      console.log(updateTicket.TicketID, 83 );
+
       io.to(roomid).emit("updatedticketData", updateTicket);
+      io.to(updateTicket.TicketID).emit("userUpdatedticketReciverd", updateTicket);
       socket.emit("ticketUpdatedReciverd", updateTicket);
     } catch (error) {
       console.error("Error creating ticket:", error);
@@ -92,7 +99,7 @@ io.on('connection', (socket) => {
     try {
       const claimedTicket = await Ticket.claimTicket(data);
       const roomid = data.AssignedToSubDepartmentID;
-      console.log(roomid, 61);
+      console.log(roomid, claimedTicket, 61);
       io.to(roomid).emit("ticketClaimed", claimedTicket);
     } catch (error) {
       console.error("Error creating ticket:", error);

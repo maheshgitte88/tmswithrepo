@@ -1,6 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../../config');
-const Category = require('./category');
+const Category = require('./Category');
 const SubCategory = require('./SubCategory');
 
 const WorkDetail = sequelize.define('WorkDetail', {
@@ -49,10 +49,10 @@ const WorkDetail = sequelize.define('WorkDetail', {
     type: DataTypes.STRING(255),
     allowNull: false,
   },
-//   SelectStatus: {
-//     type: DataTypes.STRING(255),
-//     allowNull: false,
-//   },
+  //   SelectStatus: {
+  //     type: DataTypes.STRING(255),
+  //     allowNull: false,
+  //   },
   TicketType: {
     type: DataTypes.STRING(255),
     allowNull: false,

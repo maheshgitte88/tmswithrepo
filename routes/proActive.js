@@ -1,5 +1,5 @@
 const express = require("express");
-const Category = require("../models/ProActive/category");
+const Category = require("../models/ProActive/Category");
 const SubCategory = require("../models/ProActive/SubCategory");
 const WorkDetail = require("../models/ProActive/WorkDetail");
 const Department = require("../models/Department");
