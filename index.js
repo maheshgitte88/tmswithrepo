@@ -14,17 +14,17 @@ const Ticket = require('./routes/ticket');
 const Hierarchy = require('./routes/hierarchy');
 const Training = require('./routes/training');
 const ProActive = require('./routes/proActive')
-
+const Reports =require('./routes/reports')
 const upload = multer({ dest: "uploads/" });
 
 const port = process.env.PORT || 2000;
 const app = express();
 
 // Read the certificate and private key
-const options = {
-  key: fs.readFileSync('key.pem'),
-  cert: fs.readFileSync('cert.pem')
-};
+// const options = {
+//   key: fs.readFileSync('key.pem'),
+//   cert: fs.readFileSync('cert.pem')
+// };
 
 // Create the HTTPS server
 // const server = https.createServer(options, app);
@@ -129,6 +129,8 @@ app.use('/api', Ticket.router);
 app.use('/api', Hierarchy);
 app.use('/api', Training);
 app.use('/api', ProActive);
+app.use('/api', Reports);
+
 
 
 app.post("/api/img-save", async (req, res) => {
