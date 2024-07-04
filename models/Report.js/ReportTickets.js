@@ -1,9 +1,7 @@
-// Assuming you have DataTypes initialized as `DataTypes`
 const { DataTypes } = require('sequelize');
 const sequelize = require('../../config');
-const Department = require('../Department');
-const User = require('../User');
-const SubDepartment = require('../SubDepartment');
+// const Department = require('../Department');
+
 
 const ReportTickets = sequelize.define('ReportTickets', {
   TicketID: {
@@ -38,9 +36,9 @@ const ReportTickets = sequelize.define('ReportTickets', {
   claimTimestamp: {
     type: DataTypes.DATE,
   },
-  transferred_Claim_User_id: {
-    type: DataTypes.INTEGER,
-  },
+  // transferred_Claim_User_id: {
+  //   type: DataTypes.INTEGER,
+  // },
   transferred_Timestamp: {
     type: DataTypes.DATE,
   },
@@ -74,14 +72,50 @@ const ReportTickets = sequelize.define('ReportTickets', {
   TransferredToSubDepartmentID: {
     type: DataTypes.INTEGER,
   },
-  createdAt: {
-    type: DataTypes.DATE,
+  AssignedToDepartmentName: {
+    type: DataTypes.STRING,
   },
-  updatedAt: {
-    type: DataTypes.DATE,
+  AssignedToSubDepartmentName: {
+    type: DataTypes.STRING,
   },
-  user_id: {
+  TransferredToDepartmentName: {
+    type: DataTypes.STRING,
+  },
+  TransferredToSubDepartmentName: {
+    type: DataTypes.STRING,
+  },
+  claim_UserName: {
+    type: DataTypes.STRING,
+  },
+  claim_UserLocation: {
+    type: DataTypes.STRING,
+  },
+  from_User_Id: {
     type: DataTypes.INTEGER,
+  },
+  from_UserName: {
+    type: DataTypes.STRING,
+  },
+  from_UserLocation: {
+    type: DataTypes.STRING,
+  },
+  from_User_Id: {
+    type: DataTypes.INTEGER,
+  },
+  from_UserName: {
+    type: DataTypes.STRING,
+  },
+  from_UserLocation: {
+    type: DataTypes.STRING,
+  },
+  Tranf_User_Id: {
+    type: DataTypes.INTEGER,
+  },
+  Tranf_UserName: {
+    type: DataTypes.STRING,
+  },
+  Tranf_UserLocation: {
+    type: DataTypes.STRING,
   },
   actualTAT: {
     type: DataTypes.INTEGER,
@@ -92,12 +126,12 @@ const ReportTickets = sequelize.define('ReportTickets', {
   benchmarkCategory: {
     type: DataTypes.STRING,
   },
+  createdAt: {
+    type: DataTypes.DATE,
+  },
+}, {
+  timestamps: false,
 });
 
-// Associations
-ReportTickets.belongsTo(Department, { foreignKey: 'AssignedToDepartmentID', as: 'AssignedToDepartment' });
-ReportTickets.belongsTo(User, { foreignKey: 'claim_User_Id', as: 'claim_User' });
-ReportTickets.belongsTo(SubDepartment, { foreignKey: 'AssignedToSubDepartmentID', as: 'AssignedToSubDepartment' });
-
-// Export the Ticket model
+// Export the ReportTickets model
 module.exports = ReportTickets;

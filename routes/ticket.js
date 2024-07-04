@@ -940,8 +940,7 @@ async function claimTicket(data) {
 
     // Update the ticket to be claimed by the user
     const ticket = await Ticket.update(
-      { claim_User_Id: user_id },
-      { where: { TicketID: TicketID } }
+      { claim_User_Id: user_id, claimTimestamp: new Date() },      { where: { TicketID: TicketID } }
     );
 
     // Find the updated ticket with all necessary associations
