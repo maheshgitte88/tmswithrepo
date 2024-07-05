@@ -922,7 +922,7 @@ const sendUpdatedEmailToAll = async (data) => {
 
 async function claimTicket(data) {
   try {
-    const { TicketID, user_id } = data.formData;
+    const { TicketID, user_id, claimTimestamp } = data.formData;
 
     // Check if the ticket is already claimed
     const existingTicket = await Ticket.findOne({
@@ -935,12 +935,12 @@ async function claimTicket(data) {
     }
 
     if (existingTicket.claim_User_Id) {
-      return { success: false, message: "Ticket already claimed" , user_id: user_id };
+      return { success: false, message: "Ticket already claimed", user_id: user_id };
     }
 
     // Update the ticket to be claimed by the user
     const ticket = await Ticket.update(
-      { claim_User_Id: user_id, claimTimestamp: new Date() },      { where: { TicketID: TicketID } }
+      { claim_User_Id: user_id, claimTimestamp: claimTimestamp }, { where: { TicketID: TicketID } }
     );
 
     // Find the updated ticket with all necessary associations
@@ -1049,7 +1049,7 @@ async function claimTicket(data) {
 
 async function transfclaimTicket(data) {
   try {
-    const { TicketID, user_id } = data.formData;
+    const { TicketID, user_id, tranfclaimTimestamp } = data.formData;
 
     // Check if the ticket is already transferred
     const existingTicket = await Ticket.findOne({
@@ -1062,12 +1062,15 @@ async function transfclaimTicket(data) {
     }
 
     if (existingTicket.transferred_Claim_User_id) {
-      return { success: false, message: "Ticket already claimed" , user_id: user_id };;
+      return { success: false, message: "Ticket already claimed", user_id: user_id };;
     }
 
     // Update the ticket to be transferred to the user
     const ticket = await Ticket.update(
-      { transferred_Claim_User_id: user_id },
+      {
+        transferred_Claim_User_id: user_id,
+        tranfclaimTimestamp: tranfclaimTimestamp
+      },
       { where: { TicketID: TicketID } }
     );
 

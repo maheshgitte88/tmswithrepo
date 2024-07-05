@@ -36,6 +36,9 @@ const ReportTickets = sequelize.define('ReportTickets', {
   claimTimestamp: {
     type: DataTypes.DATE,
   },
+  tranfclaimTimestamp: {
+    type: DataTypes.DATE,
+  },
   // transferred_Claim_User_id: {
   //   type: DataTypes.INTEGER,
   // },
@@ -119,6 +122,16 @@ const ReportTickets = sequelize.define('ReportTickets', {
   },
   actualTAT: {
     type: DataTypes.INTEGER,
+  },
+  actualTATOrig: {
+    type: DataTypes.INTEGER,
+  },
+  tranfActualTAT: {
+    type: DataTypes.INTEGER
+  },
+  OrigtranfActualTAT: {
+    type: DataTypes.INTEGER,
+
   },
   benchmarkPercentage: {
     type: DataTypes.FLOAT,

@@ -44,7 +44,7 @@ router.get('/reports', async (req, res) => {
     }
 
     if (locations && locations.length > 0) {
-        whereClause.location = {
+        whereClause.from_UserLocation = {
             [Op.in]: locations,
         };
     }
@@ -62,7 +62,7 @@ router.get('/reports', async (req, res) => {
     }
 
     try {
-        const tickets = await Ticket.findAll({
+        const tickets = await ReportTickets.findAll({
             where: whereClause,
             attributes: [
                 "TicketID",
@@ -75,7 +75,8 @@ router.get('/reports', async (req, res) => {
                 "TicketResTimeInMinutes",
                 "claim_User_Id",
                 "claimTimestamp",
-                "transferred_Claim_User_id",
+                'tranfclaimTimestamp',
+                // "transferred_Claim_User_id",
                 "transferred_Timestamp",
                 "closed_Timestamp",
                 "Resolution_Timestamp",
@@ -87,30 +88,44 @@ router.get('/reports', async (req, res) => {
                 "AssignedToSubDepartmentID",
                 "TransferredToDepartmentID",
                 "TransferredToSubDepartmentID",
+                'AssignedToDepartmentName',
+                'AssignedToSubDepartmentName',
+                'TransferredToDepartmentName',
+                'TransferredToSubDepartmentName',
+                'claim_UserName',
+                'claim_UserLocation',
+                'from_User_Id',
+                'from_UserName',
+                'from_UserLocation',
+                'Tranf_User_Id',
+                'Tranf_UserName',
+                'Tranf_UserLocation',
                 "createdAt",
-                "user_id",
-                "claim_User_Id",
-                // "actualTAT",
-                // "benchmarkPercentage",
-                // "benchmarkCategory"
+                // "user_id",
+                "actualTAT",
+                'tranfActualTAT',
+                "benchmarkPercentage",
+                "benchmarkCategory",
+                "actualTATOrig",
+                "OrigtranfActualTAT" 
             ],
-            include: [
-                {
-                    model: Department,
-                    as: 'AssignedToDepartment',
-                    attributes: ['DepartmentName', 'DepartmentID'],
-                },
-                {
-                    model: User,
-                    as: "claim_User",
-                    attributes: ['user_Name', 'location'],
-                },
-                {
-                    model: SubDepartment,
-                    as: "AssignedToSubDepartment",
-                    attributes: ['SubDepartmentName', 'SubDepartmentID', 'DepartmentId'],
-                },
-            ],
+            // include: [
+            //     {
+            //         model: Department,
+            //         as: 'AssignedToDepartment',
+            //         attributes: ['DepartmentName', 'DepartmentID'],
+            //     },
+            //     {
+            //         model: User,
+            //         as: "claim_User",
+            //         attributes: ['user_Name', 'location'],
+            //     },
+            //     {
+            //         model: SubDepartment,
+            //         as: "AssignedToSubDepartment",
+            //         attributes: ['SubDepartmentName', 'SubDepartmentID', 'DepartmentId'],
+            //     },
+            // ],
         });
         res.json(tickets);
     } catch (error) {
@@ -122,19 +137,14 @@ router.get('/reports', async (req, res) => {
 
 
 
-const isWeekend = (date) => {
-    const day = date.getDay();
-    return day === 0 || day === 6; // Sunday or Saturday
-};
-
 const isWithinWorkingHours = (date) => {
     const startHour = 10;
     const startMinute = 0;
     const endHour = 16;
     const endMinute = 0;
 
-    const hour = date.getHours();
-    const minute = date.getMinutes();
+    const hour = date.getUTCHours(); // Use getUTCHours to get hours in UTC
+    const minute = date.getUTCMinutes(); // Use getUTCMinutes to get minutes in UTC
 
     if (hour < startHour || hour > endHour) return false;
     if (hour === startHour && minute < startMinute) return false;
@@ -142,7 +152,10 @@ const isWithinWorkingHours = (date) => {
 
     return true;
 };
-
+const isWeekend = (date) => {
+    const day = date.getDay();
+    return day === 0 || day === 6; // Sunday or Saturday
+};
 const getWorkingMinutes = (start, end) => {
     let totalMinutes = 0;
     let current = new Date(start);
@@ -151,18 +164,46 @@ const getWorkingMinutes = (start, end) => {
         if (!isWeekend(current) && isWithinWorkingHours(current)) {
             totalMinutes++;
         }
-        current.setMinutes(current.getMinutes() + 1);
+        current.setUTCMinutes(current.getUTCMinutes() + 1); // Use setUTCMinutes to adjust minutes in UTC
     }
 
     return totalMinutes;
 };
+const getOrignalMinutes = (start, end) => {
+    let totalMinutesOrg = 0;
+    let current = new Date(start);
 
-const calculateTAT = (createdAt, resolutionTimestamp, ticketResTimeInMinutes) => {
+    while (current <= end) {
+        // if (!isWeekend(current) && isWithinWorkingHours(current)) {
+        totalMinutesOrg++;
+        // }
+        current.setUTCMinutes(current.getUTCMinutes() + 1); // Use setUTCMinutes to adjust minutes in UTC
+    }
+
+    return totalMinutesOrg;
+};
+const calculateTAT = (createdAt, resolutionTimestamp, ticketResTimeInMinutes, TransferredToDepartmentID, transferred_Timestamp) => {
     const start = new Date(createdAt);
-    const end = new Date(resolutionTimestamp);
+    const resolution = new Date(resolutionTimestamp);
 
-    const totalWorkingMinutes = getWorkingMinutes(start, end);
-    const actualTAT = totalWorkingMinutes;
+    let actualTAT = 0;
+    let tranfActualTAT = 0;
+    let OrigtranfActualTAT = 0;
+    let actualTATOrig = 0;
+
+    if(TransferredToDepartmentID) {
+        const transferred = new Date(transferred_Timestamp);
+        tranfActualTAT = getWorkingMinutes(start, resolution);
+        actualTAT = getWorkingMinutes(resolution, transferred);
+        OrigtranfActualTAT = getOrignalMinutes(start, resolution)
+        actualTATOrig = getOrignalMinutes(resolution, transferred)
+
+    } else {
+        actualTAT = getWorkingMinutes(start, resolution);
+        actualTATOrig = getOrignalMinutes(start, resolution)
+        tranfActualTAT = 0;
+    }
+
     const benchmarkPercentage = ((actualTAT - ticketResTimeInMinutes) / ticketResTimeInMinutes) * 100;
 
     let benchmarkCategory;
@@ -180,11 +221,13 @@ const calculateTAT = (createdAt, resolutionTimestamp, ticketResTimeInMinutes) =>
 
     return {
         actualTAT,
+        actualTATOrig,
         benchmarkPercentage,
         benchmarkCategory,
+        tranfActualTAT,
+        OrigtranfActualTAT 
     };
 };
-
 
 
 
@@ -203,6 +246,7 @@ async function processTickets() {
             "TicketResTimeInMinutes",
             "claim_User_Id",
             "claimTimestamp",
+            "tranfclaimTimestamp",
             "transferred_Claim_User_id",
             "transferred_Timestamp",
             "closed_Timestamp",
@@ -255,11 +299,14 @@ async function processTickets() {
     });
 
     for (const ticket of tickets) {
-        const { createdAt, Resolution_Timestamp, TicketResTimeInMinutes } = ticket;
+
+        const { createdAt, Resolution_Timestamp, TicketResTimeInMinutes, TransferredToDepartmentID, transferred_Timestamp } = ticket;
         const result = calculateTAT(
             createdAt,
             Resolution_Timestamp,
-            TicketResTimeInMinutes
+            TicketResTimeInMinutes,
+            TransferredToDepartmentID,
+            transferred_Timestamp
         );
 
         await ReportTickets.upsert({
@@ -275,7 +322,8 @@ async function processTickets() {
             Resolution_Timestamp: ticket.dataValues.Resolution_Timestamp || null,
             closed_Timestamp: ticket.dataValues.closed_Timestamp || null,
             transferred_Timestamp: ticket.dataValues.transferred_Timestamp || null,
-            claimTimestamp:ticket.dataValues.claimTimestamp || null,
+            claimTimestamp: ticket.dataValues.claimTimestamp || null,
+            tranfclaimTimestamp: ticket.dataValues.tranfclaimTimestamp || null,
             ResolutionDescription: ticket.dataValues.ResolutionDescription || null,
             TransferDescription: ticket.dataValues.TransferDescription || null,
             CloseDescription: ticket.dataValues.CloseDescription || null,
@@ -288,7 +336,7 @@ async function processTickets() {
             AssignedToSubDepartmentName: ticket.dataValues.AssignedToSubDepartment?.dataValues.SubDepartmentName || null,
             TransferredToDepartmentName: ticket.dataValues.TransferredToDepartment?.dataValues.DepartmentName || null,
             TransferredToSubDepartmentName: ticket.dataValues.TransferredToDepartment?.dataValues.DepartmentName || null,
-          
+
             claim_User_Id: ticket.dataValues.claim_User?.dataValues.user_id || null,
             claim_UserName: ticket.dataValues.claim_User?.dataValues.user_Name || null,
             claim_UserLocation: ticket.dataValues.claim_User?.dataValues.location || null,
@@ -302,15 +350,18 @@ async function processTickets() {
             Tranf_UserLocation: ticket.dataValues.transferredClaimUser?.dataValues.location || null,
 
             actualTAT: result.actualTAT,
+            actualTATOrig:result.actualTATOrig,
+            tranfActualTAT: result.tranfActualTAT,
             benchmarkPercentage: result.benchmarkPercentage,
             benchmarkCategory: result.benchmarkCategory,
+            OrigtranfActualTAT:result.OrigtranfActualTAT,
             createdAt: ticket.dataValues.createdAt,
         });
     }
 
 }
 
-processTickets()
+// processTickets()
 
 cron.schedule('0 0 * * *', () => {
     console.log('Running the processTickets function...');
@@ -318,6 +369,7 @@ cron.schedule('0 0 * * *', () => {
         .then(() => console.log('Tickets processed successfully.'))
         .catch(err => console.error('Error processing tickets:', err));
 });
+
 // router.get('/reports', async (req, res) => {
 //     const { departmentId, startDate, endDate, Status, location, ticketType, queryType, subDepartmentId } = req.query;
 //     // Validate startDate and endDate

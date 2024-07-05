@@ -14,11 +14,11 @@ const Ticket = sequelize.define('Ticket', {
     primaryKey: true,
     autoIncrement: true,
   },
-  TicketType:{
+  TicketType: {
     type: DataTypes.STRING(255),
     allowNull: true,
   },
-  TicketQuery:{
+  TicketQuery: {
     type: DataTypes.STRING,
     allowNull: true,
   },
@@ -31,27 +31,27 @@ const Ticket = sequelize.define('Ticket', {
     allowNull: true,
 
   },
-  CreatedCCMark:{
+  CreatedCCMark: {
     type: DataTypes.JSON,
     allowNull: true,
   },
-  ResolvedCCMark:{
+  ResolvedCCMark: {
     type: DataTypes.JSON,
     allowNull: true,
   },
-  TransferCCMark:{
+  TransferCCMark: {
     type: DataTypes.JSON,
     allowNull: true,
   },
-  Querycategory:{
+  Querycategory: {
     type: DataTypes.STRING,
     allowNull: true,
   },
-  QuerySubcategory:{
+  QuerySubcategory: {
     type: DataTypes.STRING,
     allowNull: true,
   },
-  TicketResTimeInMinutes:{
+  TicketResTimeInMinutes: {
     type: DataTypes.INTEGER,
     allowNull: true,
   },
@@ -64,6 +64,9 @@ const Ticket = sequelize.define('Ticket', {
     allowNull: true, // Make it nullable if you want to allow tickets without a specific employee
   },
   claimTimestamp: {
+    type: DataTypes.DATE,
+  },
+  tranfclaimTimestamp: {
     type: DataTypes.DATE,
   },
   transferred_Claim_User_id: { // Include EmployeeID field
@@ -83,7 +86,7 @@ const Ticket = sequelize.define('Ticket', {
   Resolution_Timestamp: {
     type: DataTypes.DATE,
   },
-  
+
   TransferDescription: {
     type: DataTypes.TEXT,
   },
