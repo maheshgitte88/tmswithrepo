@@ -11,7 +11,7 @@ const ReportTickets = require("../models/Report.js/ReportTickets");
 
 
 router.get('/reports', async (req, res) => {
-    const { departmentIds, subDepartmentIds, startDate, endDate, statuses, locations, ticketTypes, queryTypes } = req.query;
+    const { departmentIds, subDepartmentIds, startDate, endDate, statuses, locations, ticketTypes, queryTypes, idelBechmark } = req.query;
 
     // Validate startDate and endDate
     if (!startDate || !endDate) {
@@ -44,7 +44,7 @@ router.get('/reports', async (req, res) => {
     }
 
     if (locations && locations.length > 0) {
-        whereClause.from_UserLocation = {
+        whereClause.claim_UserLocation = {
             [Op.in]: locations,
         };
     }
@@ -58,6 +58,12 @@ router.get('/reports', async (req, res) => {
     if (queryTypes && queryTypes.length > 0) {
         whereClause.TicketQuery = {
             [Op.in]: queryTypes,
+        };
+    }
+    console.log(idelBechmark, 63)
+    if (idelBechmark && idelBechmark.length > 0) {
+        whereClause.benchmarkCategory = {
+            [Op.in]: idelBechmark,
         };
     }
 
@@ -127,6 +133,8 @@ router.get('/reports', async (req, res) => {
             //     },
             // ],
         });
+        console.log(whereClause,69)
+
         res.json(tickets);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -134,7 +142,30 @@ router.get('/reports', async (req, res) => {
 });
 
 
-
+router.get('/tickets-category', async (req, res) => {
+    try {
+        const tickets = await ReportTickets.findAll({
+            attributes: ['TicketID','Querycategory', 'QuerySubcategory']
+          });
+        const totalTickets = tickets.length;
+    
+        const categoryCounts = tickets.reduce((acc, ticket) => {
+            const key = `${ticket.Querycategory} - ${ticket.QuerySubcategory}`;
+            acc[key] = (acc[key] || 0) + 1;
+            return acc;
+          }, {});
+      
+          const result = Object.keys(categoryCounts).map(category => ({
+            name: category,
+            y: (categoryCounts[category] / totalTickets) * 100,
+            count: categoryCounts[category]
+          }));
+    
+        res.json(result);
+    } catch (error) {
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
 
 
 const isWithinWorkingHours = (date) => {
