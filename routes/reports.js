@@ -11,7 +11,7 @@ const ReportTickets = require("../models/Report.js/ReportTickets");
 
 
 router.get('/reports', async (req, res) => {
-    const { departmentIds, subDepartmentIds, startDate, endDate, statuses, locations, ticketTypes, queryTypes, idelBechmark } = req.query;
+    const { departmentIds, subDepartmentIds, startDate, endDate, statuses, locations, ticketTypes, queryTypes, idelBechmark, claim_UserName } = req.query;
 
     // Validate startDate and endDate
     if (!startDate || !endDate) {
@@ -64,6 +64,11 @@ router.get('/reports', async (req, res) => {
     if (idelBechmark && idelBechmark.length > 0) {
         whereClause.benchmarkCategory = {
             [Op.in]: idelBechmark,
+        };
+    }
+    if (claim_UserName && claim_UserName.length > 0) {
+        whereClause.claim_UserName = {
+            [Op.in]: claim_UserName,
         };
     }
 
