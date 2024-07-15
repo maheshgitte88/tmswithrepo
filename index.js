@@ -33,7 +33,8 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    // origin: "http://localhost:5173",
+    origin: "http://13.235.240.117",
     // origin: "https://master.d7ghmfcjtu6yi.amplifyapp.com",
     methods: ["GET", "POST", "PUT", "DELETE"],
   },
@@ -158,108 +159,7 @@ app.post("/api/img-save", async (req, res) => {
   }
 });
 
-const isWithinWorkingHours = (date) => {
-  const startHour = 10;
-  const startMinute = 0;
-  const endHour = 16;
-  const endMinute = 0;
 
-  const hour = date.getUTCHours(); // Use getUTCHours to get hours in UTC
-  const minute = date.getUTCMinutes(); // Use getUTCMinutes to get minutes in UTC
-
-  if (hour < startHour || hour > endHour) return false;
-  if (hour === startHour && minute < startMinute) return false;
-  if (hour === endHour && minute > endMinute) return false;
-
-  return true;
-};
-const isWeekend = (date) => {
-  const day = date.getDay();
-  return day === 0 || day === 6; // Sunday or Saturday
-};
-const getWorkingMinutes = (start, end) => {
-  let totalMinutes = 0;
-  let current = new Date(start);
-
-  while (current <= end) {
-      if (!isWeekend(current) && isWithinWorkingHours(current)) {
-          totalMinutes++;
-      }
-      current.setUTCMinutes(current.getUTCMinutes() + 1); // Use setUTCMinutes to adjust minutes in UTC
-  }
-
-  return totalMinutes;
-};
-const getOrignalMinutes = (start, end) => {
-  let totalMinutesOrg = 0;
-  let current = new Date(start);
-
-  while (current <= end) {
-      // if (!isWeekend(current) && isWithinWorkingHours(current)) {
-      totalMinutesOrg++;
-      // }
-      current.setUTCMinutes(current.getUTCMinutes() + 1); // Use setUTCMinutes to adjust minutes in UTC
-  }
-
-  return totalMinutesOrg;
-};
-const calculateTAT = (createdAt, resolutionTimestamp, ticketResTimeInMinutes, TransferredToDepartmentID, transferred_Timestamp) => {
-  const start = new Date(createdAt);
-  const resolution = new Date(resolutionTimestamp);
-
-  let actualTAT = 0;
-  let tranfActualTAT = 0;
-  let OrigtranfActualTAT = 0;
-  let actualTATOrig = 0;
-
-  if(TransferredToDepartmentID) {
-      const transferred = new Date(transferred_Timestamp);
-      tranfActualTAT = getWorkingMinutes(start, resolution);
-      actualTAT = getWorkingMinutes(resolution, transferred);
-      OrigtranfActualTAT = getOrignalMinutes(start, resolution)
-      actualTATOrig = getOrignalMinutes(resolution, transferred)
-
-  } else {
-      actualTAT = getWorkingMinutes(start, resolution);
-      actualTATOrig = getOrignalMinutes(start, resolution)
-      tranfActualTAT = 0;
-  }
-
-  const benchmarkPercentage = ((actualTAT - ticketResTimeInMinutes) / ticketResTimeInMinutes) * 100;
-
-  let benchmarkCategory;
-  if (benchmarkPercentage < 1) {
-      benchmarkCategory = "<0 %";
-  } else if (benchmarkPercentage <= 20) {
-      benchmarkCategory = "1% to 20%";
-  } else if (benchmarkPercentage <= 50) {
-      benchmarkCategory = "21% to 50%";
-  } else if (benchmarkPercentage <= 80) {
-      benchmarkCategory = "51% to 80%";
-  } else {
-      benchmarkCategory = "81% to above";
-  }
-
-  return {
-      actualTAT,
-      actualTATOrig,
-      benchmarkPercentage,
-      benchmarkCategory,
-      tranfActualTAT,
-      OrigtranfActualTAT 
-  };
-};
-
-// Example usage:
-const result = calculateTAT(
-  "2024-06-15 16:01:55",
-  "2024-06-15 16:14:37",
-  200, // Ticket resolution time in minutes
-  1, // TransferredToDepartmentID (assuming this is an ID)
-  "2024-06-15 16:16:42"
-);
-
-console.log(result);
 
 
 
